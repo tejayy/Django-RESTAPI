@@ -2,15 +2,21 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserProfileSerializer
+from rest_framework.authentication import TokenAuthentication
 from rest_framework import viewsets
+from rest_framework import filters
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.settings import api_settings
+from .serializers import HelloSerializers, UserProfileSerializer
+from .models import UserProfile
+from .permissions import UpdateOwnProfile
 
 
 """Create your views here."""
 
 class HelloApiView(APIView):
     """Test API view"""
-    serializer_class = UserProfileSerializer
+    serializer_class = HelloSerializers
     
     def get(self, request):
         """Returns a list of API Views Features"""
@@ -70,7 +76,7 @@ class HelloApiView(APIView):
         
 class HelloViewSet(viewsets.ViewSet):
     """Test Api ViewSet"""
-    serializer_class = UserProfileSerializer
+    serializer_class = HelloSerializers
     
     def list(self, request):
         """Return a Hello Message"""
@@ -135,3 +141,19 @@ class HelloViewSet(viewsets.ViewSet):
             }
         )
         
+        
+class UserProfileViewset(viewsets.ModelViewSet):
+    """Handle creating and updating users profile"""
+    serializer_class = UserProfileSerializer
+    queryset = UserProfile.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (UpdateOwnProfile,)    
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name', 'email',)
+    
+
+class UserLoginApiView(ObtainAuthToken):
+    '''Handle creating and updating users'''
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+    
+    
